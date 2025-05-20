@@ -1,0 +1,49 @@
+name: Backend CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - development
+      - 'feat/**'
+      - 'sprint/**'
+      - 'bug/**'
+  pull_request:
+    branches:
+      - main
+      - development
+      - 'feat/**'
+      - 'sprint/**'
+      - 'bug/**'
+      
+jobs:
+  sonarqube-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: xdebug
+
+      - name: Install Dependencies
+        working-directory: ./backend
+        run: composer install --no-progress --no-suggest --prefer-dist
+
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarqube-scan-action@v4
+        with:
+          projectBaseDir: ./backend
+          args: >
+            -Dsonar.organization=learnathon-by-geeky-solutions
+            -Dsonar.projectKey=Learnathon-By-Geeky-Solutions_artisan-forces
+            -Dsonar.php.coverage.reportPaths=coverage.xml
+            -Dsonar.exclusions=database/**,coverage.xml,database/migrations/2025_02_15_113608_create_permission_tables.php,**/tests/**,**/public/**,**/config/**,**/bootstrap/**,**/app/Policies/**,**/app/Filament/**
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+
